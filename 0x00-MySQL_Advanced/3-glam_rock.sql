@@ -6,4 +6,4 @@ CASE
 END as lifespan
 FROM metal_bands
 WHERE style = 'Glam rock'
-GROUP BY band_name ORDER BY lifespan DESC;
+ORDER BY lifespan DESC;
