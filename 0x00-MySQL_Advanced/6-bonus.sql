@@ -16,5 +16,5 @@ BEGIN
     END IF;
     INSERT INTO corrections (user_id, project_id, score)
     VALUES (user_id, project_id, score)
-END$$
+END;$$
 DELIMITER ;
