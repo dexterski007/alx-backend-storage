@@ -1,5 +1,5 @@
 -- bonus procedure
-DELIMITER $$
+DELIMITER //
 CREATE PROCEDURE AddBonus(
     IN user_id INT,
     IN project_name VARCHAR(255),
@@ -16,5 +16,5 @@ BEGIN
     END IF;
     INSERT INTO corrections (user_id, project_id, score)
     VALUES (user_id, project_id, score)
-END;$$
+END;//
 DELIMITER ;
