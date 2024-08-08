@@ -1,6 +1,6 @@
 -- bonus procedure
 DELIMITER $$
-CREATE PROCEDURE ComputeAverageWeightedScoreForUser()
+CREATE PROCEDURE ComputeAverageWeightedScoreForUsers()
 BEGIN
     UPDATE users
     SET average_score = (SELECT SUM(corrections.score * projects.weight) / SUM(projects.weight)
