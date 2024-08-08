@@ -1,4 +1,4 @@
--- indexes
+-- safediv function
 DELIMITER $$
 CREATE FUNCTION SafeDiv(
     IN a INT,
