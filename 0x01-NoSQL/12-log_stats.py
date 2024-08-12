@@ -8,5 +8,9 @@ if __name__ == "__main__":
     collection = client.logs.nginx
     counter = collection.count_documents({})
     print("{} logs".format(counter))
+    methods = ["GET", "POST", "PUT", "PATCH", "DELETE"]
     print("Methods:")
+    for method in methods:
+        counter2 = collection.count_documents({"method": method})
+        print(f"\tmethod {method}: {counter2}")
     print("")
