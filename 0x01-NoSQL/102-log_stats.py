@@ -15,3 +15,12 @@ if __name__ == "__main__":
         print(f"\tmethod {method}: {counter2}")
     countpath = collection.count_documents({"method": "GET", "path": "/status"})
     print(f"{countpath} status check")
+    print("IPs:")
+    pipeline = [
+        {"$group": {"_id": "$ip", "count": {"$sum" : 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 10}
+    ]
+    tops = collection.aggregate(pipeline)
+    for ip in tops:
+        print(f"\t{ip['_id']}: {ip['count']}")
