@@ -1,7 +1,17 @@
 #!/usr/bin/env python3
-""" filter topics in python """
+""" return sorted students in python """
 
 
-def schools_by_topic(mongo_collection, topic):
-    """ filter all topics """
-    return list(mongo_collection.find({"topics": topic}))
+def top_students(mongo_collection):
+    """ return sorted students in python """
+    pipeline = [
+        {
+            "$addFields": {
+                "averageScore": {"$avg": "$topics.score"}
+            }
+        },
+        {
+            "$sort": {"averageScore": -1}
+        }
+        ]
+    return list(mongo_collection.aggregate(pipeline))
