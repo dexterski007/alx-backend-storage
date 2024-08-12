@@ -1,2 +1,2 @@
 // insert doc
-db.coll.insertOne({name: "Holberton school"})
+db.collection.insertOne({name: "Holberton school"})
