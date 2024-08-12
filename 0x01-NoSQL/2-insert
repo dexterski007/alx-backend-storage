@@ -1,0 +1,2 @@
+// insert doc
+db.coll.insertOne({name: "Holberton school"})
