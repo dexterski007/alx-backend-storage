@@ -7,6 +7,6 @@ def list_all(mongo_collection):
     if mongo_collection is None:
         return []
     new_list = []
-    for doc in mongo_collection:
+    for doc in mongo_collection.find():
         new_list.append(doc)
     return new_list
