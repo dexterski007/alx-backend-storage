@@ -6,4 +6,4 @@ def list_all(mongo_collection):
     """ list all docs in mongodb """
     if mongo_collection is None:
         return []
-    return [mongo_collection.find()]
+    return list(mongo_collection.find())
