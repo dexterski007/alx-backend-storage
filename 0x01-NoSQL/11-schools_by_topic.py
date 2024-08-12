@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
-""" change all topics in python """
+""" filter topics in python """
 
 
-def update_topics(mongo_collection, name, topics):
-    """ update all topics """
-    mongo_collection.update_many(
-        {"name": name},
-        {"$set": {"topics": topics}}
-        )
+def schools_by_topic(mongo_collection, topic):
+    """ filter all topics """
+    mongo_collection.find({"topic": topic})
