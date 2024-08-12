@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
-""" filter topics in python """
+""" nginx stats """
+from pymongo import MongoClient
 
 
-def schools_by_topic(mongo_collection, topic):
-    """ filter all topics """
-    return list(mongo_collection.find({"topics": topic}))
+if __name__ == "__main__":
+    client = MongoClient('mongodb://127.0.0.1:27017')
+    collection = client.logs.nginx
+    counter = collection.count()
+    print("{} logs".format(counter))
