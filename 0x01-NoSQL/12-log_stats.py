@@ -13,4 +13,5 @@ if __name__ == "__main__":
     for method in methods:
         counter2 = collection.count_documents({"method": method})
         print(f"\tmethod {method}: {counter2}")
-    print("")
+    countpath = collection.count_documents({"path": "/status"})
+    print(f"{countpath} status check")
