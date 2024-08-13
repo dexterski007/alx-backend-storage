@@ -1,46 +1,38 @@
 #!/usr/bin/env python3
-""" function to get a page """
+'''A module with tools for request caching and tracking.
+'''
+import redis
 import requests
-import time
 from functools import wraps
 from typing import Callable
-import redis
 
 
-redis_client = redis.Redis()
+redis_store = redis.Redis()
+'''The module-level Redis instance.
+'''
 
 
-def cacher(expiry: int = 10) -> Callable:
-    """ decorator to cache and track number of accesses"""
-    def decorator(fn: Callable) -> Callable:
-        @wraps(fn)
-        def wrapper(url: str) -> str:
-            cache_key = "cache:" + url
-            cached_content = redis_client.get(cache_key)
-            if cached_content:
-                return cached_content.decode("utf-8")
-            content = fn(url)
-            redis_client.setex(cache_key, expiry, content)
-            return content
-        return wrapper
-    return decorator
+def data_cacher(method: Callable) -> Callable:
+    '''Caches the output of fetched data.
+    '''
+    @wraps(method)
+    def invoker(url) -> str:
+        '''The wrapper function for caching the output.
+        '''
+        redis_store.incr(f'count:{url}')
+        result = redis_store.get(f'result:{url}')
+        if result:
+            return result.decode('utf-8')
+        result = method(url)
+        redis_store.set(f'count:{url}', 0)
+        redis_store.setex(f'result:{url}', 10, result)
+        return result
+    return invoker
 
 
-def counter() -> Callable:
-    """ decorator to count functio naccess"""
-    def decorator(fn: Callable) -> Callable:
-        @wraps(fn)
-        def wrapper(url: str) -> str:
-            count_key = "count:" + url
-            redis_client.incr(count_key)
-            return fn(url)
-        return wrapper
-    return decorator
-
-
-@counter()
-@cacher(expiry=10)
+@data_cacher
 def get_page(url: str) -> str:
-    """ function to get an html page"""
-    response = requests.get(url)
-    return response.text
+    '''Returns the content of a URL after caching the request's response,
+    and tracking the request.
+    '''
+    return requests.get(url).text
