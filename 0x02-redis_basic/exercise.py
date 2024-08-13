@@ -6,6 +6,21 @@ from typing import Union, Callable, Optional
 from functools import wraps
 
 
+def call_history(method: Callable) -> Callable:
+    """ call history decorator"""
+    key = method.__qualname__
+    input = key + ":inputs"
+    output = key + ":outputs"
+
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
+        self._redis.rpush(input, str(args))
+        outputs = method(self, *args, **kwargs)
+        self._redis.rpush(output, str(outputs))
+        return output
+    return wrapper
+
+
 def count_calls(method: Callable) -> Callable:
     """ counter decorator """
     @wraps(method)
@@ -24,6 +39,7 @@ class Cache:
         self._redis.flushdb()
 
     @count_calls
+    @call_history
     def store(self, data: Union[str, bytes, int, float]) -> str:
         """ store data """
         key = str(uuid.uuid4())
