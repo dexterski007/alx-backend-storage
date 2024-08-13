@@ -1,46 +1,33 @@
 #!/usr/bin/env python3
-""" function to get a page """
-import requests
-import time
-from functools import wraps
+"""Get page module"""
 from typing import Callable
+import requests
 import redis
+from functools import wraps
 
 
-redis_client = redis.Redis()
+def cache_results(method: Callable) -> Callable:
+    """cache results of method"""
+    redis_instance = redis.Redis()
+
+    @wraps(method)
+    def wrapper(url):
+        result_key = f'result:{url}'
+        result = redis_instance.get(result_key)
+        if result:
+            return result.decode('utf-8')
+        count_key = f'count:{url}'
+        result = method(url)
+
+        redis_instance.incr(count_key)
+        redis_instance.set(result_key, result)
+        redis_instance.expire(result_key, 10)
+        return result
+    return wrapper
 
 
-def cacher(expiry: int = 10) -> Callable:
-    """ decorator to cache and track number of accesses"""
-    def decorator(fn: Callable) -> Callable:
-        @wraps(fn)
-        def wrapper(url: str) -> str:
-            cache_key = "cache:" + url
-            cached_content = redis_client.get(cache_key)
-            if cached_content:
-                return cached_content.decode("utf-8")
-            content = fn(url)
-            redis_client.setex(cache_key, expiry, content)
-            return content
-        return wrapper
-    return decorator
-
-
-def counter() -> Callable:
-    """ decorator to count functio naccess"""
-    def decorator(fn: Callable) -> Callable:
-        @wraps(fn)
-        def wrapper(url: str) -> str:
-            count_key = "count:" + url
-            redis_client.incr(count_key)
-            return fn(url)
-        return wrapper
-    return decorator
-
-
-@counter()
-@cacher(expiry=10)
+@cache_results
 def get_page(url: str) -> str:
-    """ function to get an html page"""
-    response = requests.get(url)
-    return response.text
+    """uses the requests module to obtain the HTML content
+    of a particular URL and returns it"""
+    return requests.get(url).text
