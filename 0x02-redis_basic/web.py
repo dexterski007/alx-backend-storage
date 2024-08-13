@@ -26,6 +26,7 @@ def cacher(url_key: str, expiry: int) -> Callable:
         return wrapper
     return decorator
 
+
 @cacher(url_key='cached', expiry=10)
 def get_page(url: str) -> str:
     """ function to get an html page"""
