@@ -31,6 +31,20 @@ def count_calls(method: Callable) -> Callable:
     return wrapper
 
 
+def replay(method: Callable) -> None:
+    """ display history of calls"""
+    key = method.__qualname__
+    input = key + ":inputs"
+    output = key + ":outputs"
+    inputs = method.__self__._redis.lrange(input, 0, -1)
+    outputs = method.__self__._redis.lrange(output, 0, -1)
+
+    print("{} was called {} times:".format(key, len(inputs)))
+    for inp, out in zip(inputs, outputs):
+        print("{}(*{}) -> {}".format(key, inp.decode("utf-8"),
+                                     out.decode("utf-8")))
+
+
 class Cache:
     """ cache class yeah """
     def __init__(self):
