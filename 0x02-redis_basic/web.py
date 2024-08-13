@@ -1,56 +1,45 @@
 #!/usr/bin/env python3
-""" Site Cache """
-import redis
+""" function to get a page """
 import requests
 from functools import wraps
 from typing import Callable
+import redis
 
-rds = redis.Redis()
+
+redis_client = redis.Redis()
 
 
-def cache_url(exp_time: int) -> Callable[[Callable], Callable]:
-    """
-    Decorator function for caching the result of a URL request in Redis.
-    """
-    def decorator(method: Callable) -> Callable:
-        """ decorator function """
-
-        @wraps(method)
+def cacher(expiry: int = 10) -> Callable:
+    """ decorator to cache and track number of accesses"""
+    def decorator(fn: Callable) -> Callable:
+        @wraps(fn)
         def wrapper(url: str) -> str:
-            """
-            Wrapper function to check and retrieve the result from the
-            cache or make a new request.
-            """
-            count = "count:{}".format(url)
-            key = "result:{}".format('url')
-
-            rds.incr(count)
-
-            result = rds.get(key)
-
-            if result:
-                return result.decode('utf-8')
-
-            res = method(url)
-            rds.set(count, 0)
-            rds.setex(key, exp_time, res)
-
-            return res
-
+            cache_key = "cache:" + url
+            cached_content = redis_client.get(cache_key)
+            if cached_content:
+                return cached_content.decode("utf-8")
+            content = fn(url)
+            redis_client.setex(cache_key, expiry, content)
+            return content
         return wrapper
-
     return decorator
 
 
-@cache_url(10)
-def get_page(url: str) -> str:
-    """
-    Retrieve the content of a web page and cache the result.
-    """
-    resp = requests.get(url)
+def counter() -> Callable:
+    """ decorator to count functio naccess"""
+    def decorator(fn: Callable) -> Callable:
+        @wraps(fn)
+        def wrapper(url: str) -> str:
+            count_key = "count:" + url
+            redis_client.incr(count_key)
+            return fn(url)
+        return wrapper
+    return decorator
 
-    if resp.status_code == 200:
-        return resp.text
-    else:
-        return "Unable to access {}. Status code: {}".format(
-                url, resp.status_code)
+
+@counter()
+@cacher(expiry=10)
+def get_page(url: str) -> str:
+    """ function to get an html page"""
+    response = requests.get(url)
+    return response.text
