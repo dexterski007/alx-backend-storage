@@ -10,24 +10,36 @@ import redis
 redis_client = redis.Redis()
 
 
-def cacher(url_key: str, expiry: int) -> Callable:
+def cacher(expiry: int = 10) -> Callable:
     """ decorator to cache and track number of accesses"""
     def decorator(fn: Callable) -> Callable:
         @wraps(fn)
         def wrapper(url: str) -> str:
-            count_key = f"count:{url_key}"
-            redis_client.incr(count_key)
-            result = redis_client.get(url_key)
-            if result:
-                return result.decode("utf-8")
-            results = fn(url)
-            redis_client.setex(url_key, expiry, results)
-            return results
+            cache_key = "cache:" + url
+            cached_content = redis_client.get(cache_key)
+            if cached_content:
+                return cached_content.decode("utf-8")
+            content = fn(url)
+            redis_client.setex(cache_key, expiry, content)
+            return content
         return wrapper
     return decorator
 
 
-@cacher(url_key='cached', expiry=10)
+def counter() -> Callable:
+    """ decorator to count functio naccess"""
+    def decorator(fn: Callable) -> Callable:
+        @wraps(fn)
+        def wrapper(url: str) -> str:
+            count_key = "count:" + url
+            redis_client.incr(count_key)
+            return fn(url)
+        return wrapper
+    return decorator
+
+
+@counter()
+@cacher(expiry=10)
 def get_page(url: str) -> str:
     """ function to get an html page"""
     response = requests.get(url)
