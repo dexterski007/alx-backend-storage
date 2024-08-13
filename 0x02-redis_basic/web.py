@@ -1,34 +1,46 @@
 #!/usr/bin/env python3
-""" Python script """
+""" function to get a page """
 import requests
-import redis
-from typing import Callable
+import time
 from functools import wraps
+from typing import Callable
+import redis
 
 
-red = redis.Redis()
+redis_client = redis.Redis()
 
 
-def count_requests(method: Callable) -> Callable:
-    """Decorator"""
-    @wraps(method)
-    def wrapper(url):
-        """ wrapper method"""
-        red.incr(f"count:{url}")
-        cached_html = red.get(f"cached:{url}")
+def cacher(expiry: int = 10) -> Callable:
+    """ decorator to cache and track number of accesses"""
+    def decorator(fn: Callable) -> Callable:
+        @wraps(fn)
+        def wrapper(url: str) -> str:
+            cache_key = "cache:" + url
+            cached_content = redis_client.get(cache_key)
+            if cached_content:
+                return cached_content.decode("utf-8")
+            content = fn(url)
+            redis_client.setex(cache_key, expiry, content)
+            return content
+        return wrapper
+    return decorator
 
-        if cached_html:
-            return cached_html.decode('utf-8')
-        html = method(url)
-        red.setex(f"cached:{url}", 10, html)
-        return html
 
-    return wrapper
+def counter() -> Callable:
+    """ decorator to count functio naccess"""
+    def decorator(fn: Callable) -> Callable:
+        @wraps(fn)
+        def wrapper(url: str) -> str:
+            count_key = "count:" + url
+            redis_client.incr(count_key)
+            return fn(url)
+        return wrapper
+    return decorator
 
 
-@count_requests
+@counter()
+@cacher(expiry=10)
 def get_page(url: str) -> str:
-    """ uses the requests module to obtain the HTML content
-    of a particular URL and returns it """
-    req = requests.get(url)
-    return req.text
+    """ function to get an html page"""
+    response = requests.get(url)
+    return response.text
