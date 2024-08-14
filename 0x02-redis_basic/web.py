@@ -33,7 +33,6 @@ def counter() -> Callable:
         def wrapper(url: str) -> str:
             count_key = str("count:" + url)
             redis_client.incr(count_key)
-            print (count_key)
             return fn(url)
         return wrapper
     return decorator
