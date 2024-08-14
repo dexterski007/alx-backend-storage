@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """ function to get a page """
 import requests
+import time
 from functools import wraps
 from typing import Callable
 import redis
@@ -30,8 +31,9 @@ def counter() -> Callable:
     def decorator(fn: Callable) -> Callable:
         @wraps(fn)
         def wrapper(url: str) -> str:
-            count_key = "count:" + url
+            count_key = str("count:" + url)
             redis_client.incr(count_key)
+            print (count_key)
             return fn(url)
         return wrapper
     return decorator
