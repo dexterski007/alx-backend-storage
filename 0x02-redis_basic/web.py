@@ -1,17 +1,21 @@
 #!/usr/bin/env python3
-""" redis cache implement """
+"""5. Implementing an expiring web cache and tracker"""
 import requests
 import redis
 
-rcache = redis.Redis()
+r = redis.Redis()
 
 
 def get_page(url: str) -> str:
-    """ getting html and content """
-    rcache.incr(f"count:{url}")
-    cache = rcache.get(url)
-    if cache:
-        return cache.decode('utf-8')
-    content = requests.get(url).text
-    rcache.setex(url, 10, content)
-    return content
+    """Get the HTML content of a particular URL and returns it"""
+    r.incr(f"count:{url}")
+
+    cached = r.get(url)
+    if cached:
+        return cached.decode('utf-8')
+
+    html_content = requests.get(url).text
+
+    r.setex(url, 10, html_content)
+
+    return html_content
